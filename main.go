@@ -1,7 +1,8 @@
 package main
 
-import "fmt"
+import "github.com/kangsorang/srcoin/something"
 
 func main() {
-	fmt.Println("Hello world")
+	something.SayGood()
+	something.SayHello()
 }

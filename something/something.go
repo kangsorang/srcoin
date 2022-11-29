@@ -6,6 +6,10 @@ func sayBye() {
 	fmt.Println("sayBye")
 }
 
-func SayBye() {
-	fmt.Println("SayBye")
+func SayHello() {
+	fmt.Println("SayHello")
+}
+
+func SayGood() {
+	fmt.Println("Say Good")
 }
