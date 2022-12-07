@@ -1,46 +1,46 @@
 package main
 
 import (
-	"crypto/sha256"
-	"fmt"
+	"html/template"
+	"log"
+	"net/http"
+
+	"github.com/kangsorang/srcoin/blockchain"
 )
 
-type block struct {
-	data     string
-	hash     string
-	prevHash string
+const (
+	port        string = ":4000"
+	templateDir string = "templates/"
+)
+
+type homeData struct {
+	PageTitle string
+	Blocks    []*blockchain.Block
 }
 
-type blockchain struct {
-	blocks []block
-}
-
-func (b *blockchain) getLastHash() string {
-	if len(b.blocks) > 0 {
-		return b.blocks[len(b.blocks)-1].hash
-	}
-	return ""
-}
-func (b *blockchain) addBlock(data string) {
-	newBlock := block{data, "", b.getLastHash()}
-	hash := sha256.Sum256([]byte(newBlock.data + newBlock.prevHash))
-	newBlock.hash = fmt.Sprintf("%x", hash)
-	b.blocks = append(b.blocks, newBlock)
-}
-
-func (b *blockchain) listBlock() {
-	for _, block := range b.blocks {
-		fmt.Printf("Block data : %s\n", block.data)
-		fmt.Printf("Hash : %s\n", block.hash)
-		fmt.Printf("PrevHash : %s\n", block.prevHash)
-	}
-}
+var templates *template.Template
 
 func main() {
-	chain := blockchain{}
-	chain.addBlock("Genesis Block")
-	chain.addBlock("Second Block")
-	chain.addBlock("Third Block")
-	chain.listBlock()
+	templates = template.Must(template.ParseGlob(templateDir + "pages/*.html"))
+	templates = template.Must(templates.ParseGlob(templateDir + "partials/*.html"))
+	http.HandleFunc("/", home)
+	http.HandleFunc("/add", add)
+	log.Fatal(http.ListenAndServe(port, nil))
+}
 
+func add(rw http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case "GET":
+		templates.ExecuteTemplate(rw, "add", nil)
+	case "POST":
+		r.ParseForm()
+		data := r.Form.Get("blockData")
+		blockchain.GetBlockchain().AddBlock(data)
+		http.Redirect(rw, r, "/", http.StatusPermanentRedirect)
+	}
+}
+
+func home(rw http.ResponseWriter, r *http.Request) {
+	data := homeData{PageTitle: "home", Blocks: blockchain.GetBlockchain().AllBlock()}
+	templates.ExecuteTemplate(rw, "home", data)
 }
