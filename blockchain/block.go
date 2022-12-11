@@ -8,27 +8,26 @@ import (
 	"github.com/kangsorang/srcoin/utils"
 )
 
-type Block struct {
-	Data     string `json:"data"`
-	Hash     string `json:"hash"`
-	PrevHash string `json:"prevHash"`
-	Height   int    `json:"height"`
+type block struct {
+	Data     string
+	Hash     string
+	PrevHash string
+	Height   int
 }
 
-func (b *Block) persist() {
-	db.SaveBlock(b.Hash, utils.ToBytes(b))
+func (b *block) persist() {
+	db.SaveBlock(b.Hash, utils.ToByte(b))
 }
 
-func createBlock(data string, prevHash string, height int) *Block {
-	block := &Block{
+func createBlock(data string, prevHash string, height int) *block {
+	block := &block{
 		Data:     data,
-		Hash:     "",
 		PrevHash: prevHash,
+		Hash:     "",
 		Height:   height,
 	}
-	payload := block.Data + block.PrevHash + fmt.Sprint(height)
+	payload := block.Data + block.PrevHash + fmt.Sprint(block.Height)
 	block.Hash = fmt.Sprintf("%x", sha256.Sum256([]byte(payload)))
-	fmt.Println("444")
 	block.persist()
 	return block
 }

@@ -11,8 +11,8 @@ import (
 )
 
 type blockchain struct {
-	NewestHash string `json:"NewestHash"`
-	Height     int    `json:"height"`
+	NewestHash string
+	Height     int
 }
 
 var b *blockchain
@@ -22,15 +22,14 @@ func Blockchain() *blockchain {
 	if b == nil {
 		once.Do(func() {
 			b = &blockchain{"", 0}
-			checkpoint := db.GetCheckpoint()
-			fmt.Println("111")
+			checkpoint := db.Checkpoint()
 			if checkpoint == nil {
-				b.AddBlock("Genesis")
+				b.addBlock("Genesis block")
+				fmt.Println("addBlock end")
 			} else {
-				fmt.Println("restore checkpoint")
+				fmt.Println("Restore checkpoint")
 				b.restore(checkpoint)
 			}
-			fmt.Println("222")
 		})
 	}
 	return b
@@ -41,14 +40,15 @@ func (b *blockchain) restore(data []byte) {
 	utils.HandleErr(err)
 }
 
-func (b *blockchain) AddBlock(data string) {
-	block := createBlock(data, b.NewestHash, b.Height+1)
+func (b *blockchain) addBlock(data string) {
+	fmt.Println("addBlock")
+	block := createBlock(data, b.NewestHash, b.Height)
 	b.NewestHash = block.Hash
 	b.Height = block.Height
-	fmt.Println("222")
 	b.persist()
 }
 
 func (b *blockchain) persist() {
-	db.SaveBlockchain(utils.ToBytes(b))
+	fmt.Println("blockchain persist")
+	db.SaveBlockchain(utils.ToByte(b))
 }

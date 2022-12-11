@@ -3,6 +3,7 @@ package utils
 import (
 	"bytes"
 	"encoding/gob"
+	"fmt"
 	"log"
 )
 
@@ -12,10 +13,10 @@ func HandleErr(err error) {
 	}
 }
 
-func ToBytes(i any) []byte {
+func ToByte(data any) []byte {
+	fmt.Println("ToByte")
 	var buffer bytes.Buffer
-	encoder := gob.NewEncoder(&buffer)
-	err := encoder.Encode(i)
+	err := gob.NewEncoder(&buffer).Encode(data)
 	HandleErr(err)
 	return buffer.Bytes()
 }

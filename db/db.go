@@ -1,69 +1,59 @@
 package db
 
 import (
-	"fmt"
-
 	"github.com/boltdb/bolt"
 	"github.com/kangsorang/srcoin/utils"
 )
 
 const (
-	dbName       = "blockchain.db"
-	dataBucket   = "data"
-	blocksBucket = "blocks"
-
-	checkPoint = "checkpoint"
+	database    = "blockchain.db"
+	blockBucket = "block"
+	dataBucket  = "data"
+	checkpoint  = "checkpoint"
 )
 
 var db *bolt.DB
 
 func DB() *bolt.DB {
 	if db == nil {
-		dbPointer, err := bolt.Open(dbName, 0700, nil)
+		dbPoint, err := bolt.Open(database, 0700, nil)
 		utils.HandleErr(err)
-		db = dbPointer
+		db = dbPoint
 		err = db.Update(func(tx *bolt.Tx) error {
-			_, err := tx.CreateBucketIfNotExists([]byte(dataBucket))
+			_, err := tx.CreateBucketIfNotExists([]byte(blockBucket))
 			utils.HandleErr(err)
-			_, err = tx.CreateBucketIfNotExists([]byte(blocksBucket))
+			_, err = tx.CreateBucketIfNotExists([]byte(dataBucket))
 			return err
 		})
 		utils.HandleErr(err)
-
 	}
 	return db
 }
 
 func SaveBlock(hash string, data []byte) {
-	fmt.Println("777")
 	err := DB().Update(func(tx *bolt.Tx) error {
-		fmt.Println("aaa")
-		bucket := tx.Bucket([]byte(dataBucket))
-		fmt.Println("bbb")
+		bucket := tx.Bucket([]byte(blockBucket))
 		err := bucket.Put([]byte(hash), data)
-		fmt.Println("ccc")
 		return err
 	})
 	utils.HandleErr(err)
-	fmt.Println("888")
 }
 
 func SaveBlockchain(data []byte) {
 	err := DB().Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(blocksBucket))
-		err := bucket.Put([]byte(checkPoint), data)
+		bucket := tx.Bucket([]byte(dataBucket))
+		err := bucket.Put([]byte(checkpoint), data)
 		return err
 	})
 	utils.HandleErr(err)
 }
 
-func GetCheckpoint() []byte {
-	var data []byte
-	err := DB().View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(blocksBucket))
-		data = bucket.Get([]byte(checkPoint))
+func Checkpoint() []byte {
+	var checkpoint []byte
+	DB().View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(dataBucket))
+		checkpoint = bucket.Get([]byte(checkpoint))
 		return nil
 	})
-	utils.HandleErr(err)
-	return data
+	return checkpoint
 }
