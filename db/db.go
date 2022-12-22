@@ -5,24 +5,25 @@ import (
 	"github.com/kangsorang/srcoin/utils"
 )
 
-const (
-	database    = "blockchain.db"
-	blockBucket = "block"
-	dataBucket  = "data"
-	checkpoint  = "checkpoint"
-)
-
 var db *bolt.DB
+
+const (
+	dbName       = "blockchain.db"
+	dataBucket   = "data"
+	blocksBucket = "block"
+
+	checkpoint = "checkpoint"
+)
 
 func DB() *bolt.DB {
 	if db == nil {
-		dbPoint, err := bolt.Open(database, 0700, nil)
+		dbPointer, err := bolt.Open(dbName, 0600, nil)
+		db = dbPointer
 		utils.HandleErr(err)
-		db = dbPoint
 		err = db.Update(func(tx *bolt.Tx) error {
-			_, err := tx.CreateBucketIfNotExists([]byte(blockBucket))
+			_, err := tx.CreateBucketIfNotExists([]byte(dataBucket))
 			utils.HandleErr(err)
-			_, err = tx.CreateBucketIfNotExists([]byte(dataBucket))
+			_, err = tx.CreateBucketIfNotExists([]byte(blocksBucket))
 			return err
 		})
 		utils.HandleErr(err)
@@ -30,16 +31,20 @@ func DB() *bolt.DB {
 	return db
 }
 
+func Close() {
+	DB().Close()
+}
+
 func SaveBlock(hash string, data []byte) {
 	err := DB().Update(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(blockBucket))
+		bucket := tx.Bucket([]byte(blocksBucket))
 		err := bucket.Put([]byte(hash), data)
 		return err
 	})
 	utils.HandleErr(err)
 }
 
-func SaveBlockchain(data []byte) {
+func SaveCheckpoint(data []byte) {
 	err := DB().Update(func(tx *bolt.Tx) error {
 		bucket := tx.Bucket([]byte(dataBucket))
 		err := bucket.Put([]byte(checkpoint), data)
@@ -48,12 +53,23 @@ func SaveBlockchain(data []byte) {
 	utils.HandleErr(err)
 }
 
-func Checkpoint() []byte {
-	var checkpoint []byte
+func GetBlock(hash string) []byte {
+	var data []byte
 	DB().View(func(tx *bolt.Tx) error {
-		bucket := tx.Bucket([]byte(dataBucket))
-		checkpoint = bucket.Get([]byte(checkpoint))
+		bucket := tx.Bucket([]byte(blocksBucket))
+		data = bucket.Get([]byte(hash))
 		return nil
 	})
-	return checkpoint
+	return data
+}
+
+func Checkpoint() []byte {
+	var data []byte
+	err := DB().View(func(tx *bolt.Tx) error {
+		bucket := tx.Bucket([]byte(dataBucket))
+		data = bucket.Get([]byte(checkpoint))
+		return nil
+	})
+	utils.HandleErr(err)
+	return data
 }

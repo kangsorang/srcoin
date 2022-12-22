@@ -1,7 +1,7 @@
 package main
 
-import "github.com/kangsorang/srcoin/blockchain"
+import "github.com/kangsorang/srcoin/rest"
 
 func main() {
-	blockchain.Blockchain()
+	rest.Start(4000)
 }
